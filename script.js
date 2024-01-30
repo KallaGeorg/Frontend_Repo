@@ -9,7 +9,7 @@ let ol = document.createElement("ol");
 let failMessage = document.createElement("p");
 
 function postData(data){
-  const url = 'http://localhost:8080/';
+  const url = 'http://localhost:8080/recipes';
   const options = {
     method: 'POST',
     headers: {
@@ -80,10 +80,10 @@ function printMeals(mealName){
   document.body.appendChild(postButton);
   postButton.addEventListener("click", ()=>{
     const postDataObject = {
-      mealId: meal.idMeal,
-      textarea1: textarea1.value,
-      textarea2: textarea2.value,
-      textarea3: textarea3.value
+      id: meal.idMeal,
+      mealName: textarea1.value,
+      recipe: textarea2.value,
+      comment: textarea3.value
     };
     postData(postDataObject);
   });
