@@ -1,16 +1,126 @@
-let label = document.createElement("label");
-label.setAttribute("for", "searchField");
-label.innerText="Type a meal name and hit enter: ";
-document.getElementById("labelContainer").appendChild(label);
-let searchField = document.getElementById("searchField");
-let parentElement = searchField.parentElement;
-parentElement.insertBefore(label, searchField);
 let ol = document.createElement("ol");
-let failMessage = document.createElement("p");
+let failMessageSearch = document.createElement("div");
+let searchContainer = document.createElement("div");
+searchContainer.id = "searchContainer";
+
+let header1 = document.createElement("h3");
+header1.id = "headerField";
+header1.innerText = "Search dish by first letter";
+searchContainer.appendChild(header1);
+
+
+let searchLabel1 = document.createElement("label");
+let searchField1 = document.createElement("input");
+
+function keyBoardEnter(event){
+  if(event.key === "Enter"){
+      let mealName = searchField.value;
+      printMeals(mealName);
+      searchField.value = "";
+  }
+}
+
+
+searchLabel1.setAttribute("for", "searchByFirstLetter");
+searchLabel1.innerText = "Search by first letter: ";
+searchField1.id = "searchByFirstLetter";
+searchField1.type = "text";
+searchField1.size = 1;
+
+searchField1.addEventListener("keydown", function(event) {
+  failMessageSearch.remove();
+    if (event.key === "Enter") {
+        let firstLetter = searchField1.value.trim().toLowerCase();
+        if (firstLetter.length !== 1 || !/[a-zA-Z]/.test(firstLetter)) {
+            alert("Please enter a single letter.");
+            return;
+        }
+        searchField1.value ="";
+        printMealsByLetter(firstLetter);
+    }
+});
+searchContainer.appendChild(searchLabel1);
+searchContainer.appendChild(searchField1);
+
+let header2 = document.createElement("h3");
+header2.id = "headerField";
+header2.innerText = "Show the recipe";
+searchContainer.appendChild(header2);
+
+let searchLabel = document.createElement("label");
+searchLabel.setAttribute("for", "searchField");
+searchLabel.innerText="Type a meal name and hit enter: ";
+
+let searchField = document.createElement("input");
+searchField.id = "searchByName";
+searchField.type = "text";
+searchField.addEventListener("keydown", keyBoardEnter);
+
+
+let printFavoritesBtn = document.createElement("button");
+printFavoritesBtn.innerText ="Show saved dishes";
+printFavoritesBtn.addEventListener("click", ()=>{
+  printAllMealNames();
+});
+
+
+
+searchContainer.appendChild(searchLabel);
+searchContainer.appendChild(searchField);
+searchContainer.appendChild(printFavoritesBtn);
+document.body.appendChild(searchContainer);
+
+
+function printMealsByLetter(letter){
+  
+  removeFailMessageSearch();
+ 
+  const olContainer = document.createElement("div");
+      olContainer.style.textAlign = "center";
+      olContainer.id = "letterSearchContainer";
+      const ol = document.createElement("ol");
+      ol.id = "letterSearch";
+  fetch("https://www.themealdb.com/api/json/v1/1/search.php?f="+letter)
+  .then(res => res.json())
+  .then(data =>{
+    if(data.meals){
+      ol.innerHTML="";
+      
+      data.meals.forEach(meal =>{
+        const li = document.createElement("li");
+        li.innerText = meal.strMeal;
+        ol.appendChild(li);
+      });
+      
+      olContainer.appendChild(ol);
+      document.body.appendChild(olContainer);
+      
+    }else{
+      failMessage.innerText = "No meals found!";
+      document.body.appendChild(failMessage);
+    }
+  })
+  .catch(error => {
+    console.log("Error fetching meals: ", error);
+    failMessage.innerText = "Error fetching meals.";
+    document.body.appendChild(failMessage);
+  });
+}
+ function removeOlContainer(){
+  const container = document.getElementById("letterSearchContainer");
+  if(container){
+    container.parentNode.removeChild(container);
+  }
+}
+  setTimeout(removeOlContainer, 0);
+
 
 function createMealListItem(meal){
+  removeOlContainer();
+  failMessageSearch.remove();
   
-  let li = document.createElement("li");
+  const li = document.createElement("li");
+  li.style.textAlign = "center";
 
   const mealId = document.createElement("p");
   mealId.innerText = "Meal Id: "+meal.idMeal;
@@ -46,9 +156,7 @@ function createMealListItem(meal){
   li.appendChild(ul);
   
   let postButton = document.createElement("button");
-  postButton.innerText = "Post the recipe";
-  li.appendChild(postButton);
-
+  postButton.innerText = "Save the recipe";
   postButton.addEventListener("click", ()=>{
     const postDataObject = {
       id: meal.idMeal,
@@ -61,10 +169,28 @@ function createMealListItem(meal){
     ol.removeChild(li);
  
   });
-  
+  li.appendChild(postButton);
+
+  let exitButton = document.createElement("button");
+  exitButton.innerText = "Exit";
+  exitButton.addEventListener("click", () => {
+    
+      exitFunction(li);
+  });
+  li.appendChild(exitButton);
+
+
   return li;
 }
-
+function exitFunction(li){
+  ol.removeChild(li);
+  window.history.back();
+}
+function removeFailMessageSearch(){
+  if(failMessageSearch && failMessageSearch.parentNode){
+    failMessageSearch.parentNode.removeChild(failMessageSearch);
+  }
+}
 function postData(data){
   const url = 'http://localhost:8080/recipes';
   const options = {
@@ -86,13 +212,15 @@ fetch(url,options)
 .catch(error => console.log('Error posting data:',error))
 }
 function printMeals(mealName){
+removeOlContainer();
+removeFailMessageSearch();
 fetch("https://www.themealdb.com/api/json/v1/1/search.php?s="+mealName)
 .then(res => res.json())
 .then(data => {
   console.log("data", data);
   const meal = data.meals ? data.meals[0]: null;
   if(meal){
-    failMessage.innerText = "";
+    failMessageSearch.remove();
     const mealRecipe = meal.strInstructions;
     const li = createMealListItem(meal);
     ol.appendChild(li);
@@ -101,8 +229,8 @@ fetch("https://www.themealdb.com/api/json/v1/1/search.php?s="+mealName)
   console.log("Recipe: ", mealRecipe);
   
   }else{
-    failMessage.innerText = "No meal found with given name."
-    document.body.appendChild(failMessage);
+    failMessageSearch.innerText = "No meal found with given name."
+    document.body.appendChild(failMessageSearch);
     searchField.value = "";
   }
   
@@ -110,20 +238,23 @@ fetch("https://www.themealdb.com/api/json/v1/1/search.php?s="+mealName)
 
 }
 
-function keyBoardEnter(event){
-    if(event.key === "Enter"){
-        let mealName = searchField.value;
-        printMeals(mealName);
-        searchField.value = "";
-    }
-}
-searchField.addEventListener("keydown", keyBoardEnter);
-
  function printAllMealNames(){
+  removeOlContainer();
+  removeFailMessageSearch();
   fetch("http://localhost:8080/mealNames")
   .then((res)=> res.json())
   .then((data)=>{
+    ol.id = "letterSearch";
     ol.innerHTML ="";
+    if(data.length === 0){
+      const message = document.createElement("p");
+      message.innerText = "No dishes saved";
+      ol.appendChild(message);
+
+      setTimeout(() => {
+        ol.removeChild(message);
+      }, 3000);
+    }else{
     data.forEach((mealName)=>{
       const li = document.createElement("li");
       li.innerText = mealName;
@@ -134,17 +265,28 @@ searchField.addEventListener("keydown", keyBoardEnter);
       });
       li.appendChild(deleteButton);
       const getButton = document.createElement("button");
-      getButton.innerText = "Get table data!";
+      getButton.innerText = "Work with saved dish";
       getButton.addEventListener("click", ()=>{
+        document.body.removeChild(ol);
+        const liElements = ol.getElementsByTagName("li");
+        while (liElements.length > 0){
+          ol.removeChild(liElements[0]);
+        }
+        
         getTableData(mealName);
+        
       });
       li.appendChild(getButton);
       ol.appendChild(li);
     });
+  }
+    ol.style.textAlign = "center";
     document.body.appendChild(ol);
   })
   .catch((error)=> console.log("Error fetching meal names", error));
  }
+ 
+ 
  function getTableData(mealName){
   fetch(`http://localhost:8080/mealNames/${mealName}`)
   .then((res)=> res.json())
@@ -154,8 +296,11 @@ searchField.addEventListener("keydown", keyBoardEnter);
   .catch((error)=>console.log('error fetching table data',error));
  }
  const ol2 = document.createElement("ol");
+ ol2.id = "letterSearch";
  document.body.appendChild(ol2);
  function displayTableData(data){
+  removeOlContainer();
+  ol2.style.textAlign = "center";
   const mealId = data.id;
   const mealName = data.mealName;
   const recipe = data.recipe;
@@ -191,7 +336,7 @@ searchField.addEventListener("keydown", keyBoardEnter);
   
 
   const postUpdateBtn = document.createElement("button");
-  postUpdateBtn.innerText = "Post Update";
+  postUpdateBtn.innerText = "Save Update";
   postUpdateBtn.addEventListener("click", ()=>{
     const updatedData ={
       id: mealId,
@@ -202,11 +347,20 @@ searchField.addEventListener("keydown", keyBoardEnter);
     updateRecipe(mealName,updatedData,li);
     ol2.removeChild(li);
   });
+  const exitBtn2 = document.createElement("button");
+  exitBtn2.innerText = "Exit";
+  exitBtn2.addEventListener("click", ()=>{
+    window.history.back();
+    ol2.removeChild(li);
+  })
   li.appendChild(postUpdateBtn);
-  
+  li.appendChild(exitBtn2);
   ol2.appendChild(li);
   
  }
+ 
+ 
+ 
 
  function updateRecipe(mealName, mealData, listItem){
   const url = `http://localhost:8080/mealNames/${mealName}`;
@@ -268,4 +422,4 @@ searchField.addEventListener("keydown", keyBoardEnter);
   })
   .catch((error)=> console.log('Error deleting meal: ',error));
  }
- document.getElementById("printListBtn").addEventListener("click", printAllMealNames);
+ 

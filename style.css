@@ -1,3 +1,9 @@
-#labelContainer{
-    display: block;
+h1{
+    text-align: center;
+}
+#searchContainer{
+    text-align: center;
+}
+#letterSearch{
+    list-style-type: none;
 }
