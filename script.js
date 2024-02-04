@@ -33,6 +33,7 @@ searchField1.addEventListener("keydown", function(event) {
         let firstLetter = searchField1.value.trim().toLowerCase();
         if (firstLetter.length !== 1 || !/[a-zA-Z]/.test(firstLetter)) {
             alert("Please enter a single letter.");
+            searchField1.value = "";
             return;
         }
         searchField1.value ="";
