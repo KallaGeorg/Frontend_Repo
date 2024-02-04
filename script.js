@@ -22,7 +22,7 @@ function keyBoardEnter(event){
 
 
 searchLabel1.setAttribute("for", "searchByFirstLetter");
-searchLabel1.innerText = "Search by first letter: ";
+searchLabel1.innerText = "Add a letter and hit enter: ";
 searchField1.id = "searchByFirstLetter";
 searchField1.type = "text";
 searchField1.size = 1;
@@ -49,7 +49,7 @@ searchContainer.appendChild(header2);
 
 let searchLabel = document.createElement("label");
 searchLabel.setAttribute("for", "searchField");
-searchLabel.innerText="Type a meal name and hit enter: ";
+searchLabel.innerText="Add meal name and hit enter: ";
 
 let searchField = document.createElement("input");
 searchField.id = "searchByName";
@@ -59,6 +59,7 @@ searchField.addEventListener("keydown", keyBoardEnter);
 
 let printFavoritesBtn = document.createElement("button");
 printFavoritesBtn.innerText ="Show saved dishes";
+printFavoritesBtn.id = "printFavoritesBtn";
 printFavoritesBtn.addEventListener("click", ()=>{
   printAllMealNames();
 });
@@ -70,14 +71,18 @@ searchContainer.appendChild(searchField);
 searchContainer.appendChild(printFavoritesBtn);
 document.body.appendChild(searchContainer);
 
-
+let failMessage = document.createElement("div");
+failMessage.id = "failMessageByLetter";
 function printMealsByLetter(letter){
-  
   removeFailMessageSearch();
- 
+
   const olContainer = document.createElement("div");
       olContainer.style.textAlign = "center";
       olContainer.id = "letterSearchContainer";
+  const headerForLetterSearch = document.createElement("h3");
+  headerForLetterSearch.id = "headerForLetterSearch";
+  headerForLetterSearch.innerText = "Your Search:";
+  olContainer.appendChild(headerForLetterSearch);    
       const ol = document.createElement("ol");
       ol.id = "letterSearch";
   fetch("https://www.themealdb.com/api/json/v1/1/search.php?f="+letter)
@@ -98,6 +103,7 @@ function printMealsByLetter(letter){
     }else{
       failMessage.innerText = "No meals found!";
       document.body.appendChild(failMessage);
+      olContainer.removeChild(headerForLetterSearch);
     }
   })
   .catch(error => {
@@ -122,41 +128,50 @@ function createMealListItem(meal){
   const li = document.createElement("li");
   li.style.textAlign = "center";
 
-  const mealId = document.createElement("p");
-  mealId.innerText = "Meal Id: "+meal.idMeal;
+   const mealId = document.createElement("p");
+   mealId.innerText = "Meal Id: " +meal.idMeal;
+   li.appendChild(mealId);
   
+
+  const textarea1Container = document.createElement("div");
   let textarea1 = document.createElement("textarea");
+  textarea1.id = "textarea";
   textarea1.value = meal.strMeal;
   textarea1.rows = 2;
   textarea1.cols = 30;
   textarea1.addEventListener("input", function(){
     meal.strMeal = this.value;
   });
-
+  textarea1Container.appendChild(textarea1);
+  li.appendChild(textarea1Container);
+  
+  const textarea2Container = document.createElement("div");
   let textarea2 = document.createElement("textarea");
+  textarea2.id = "textarea";
   textarea2.value = meal.strInstructions;
   textarea2.rows = 20;
   textarea2.cols = 60;
   textarea2.addEventListener("input", function(){
     meal.strInstructions = this.value;
   });
+  textarea2Container.appendChild(textarea2);
+  li.appendChild(textarea2Container);
 
+  const textarea3Container = document.createElement("div");
   let textarea3 = document.createElement("textarea");
+  textarea3.id = "textarea";
   textarea3.placeholder = "Add comment";
   textarea3.rows = 5;
   textarea3.cols = 30;
   textarea3.addEventListener("input", function(){
   textarea3.value = this.value;
   });
-  let ul = document.createElement("ul");
-  ul.appendChild(textarea2);
-  ul.appendChild(textarea3);
-  li.appendChild(mealId);
-  li.appendChild(textarea1);
-  li.appendChild(ul);
-  
+  textarea3Container.appendChild(textarea3);
+  li.appendChild(textarea3Container);
+ 
   let postButton = document.createElement("button");
-  postButton.innerText = "Save the recipe";
+  postButton.innerText = "Save";
+  postButton.id = "buttonDisplayed";
   postButton.addEventListener("click", ()=>{
     const postDataObject = {
       id: meal.idMeal,
@@ -173,6 +188,7 @@ function createMealListItem(meal){
 
   let exitButton = document.createElement("button");
   exitButton.innerText = "Exit";
+  exitButton.id = "buttonDisplayed";
   exitButton.addEventListener("click", () => {
     
       exitFunction(li);
@@ -182,6 +198,7 @@ function createMealListItem(meal){
 
   return li;
 }
+
 function exitFunction(li){
   ol.removeChild(li);
   window.history.back();
@@ -189,6 +206,10 @@ function exitFunction(li){
 function removeFailMessageSearch(){
   if(failMessageSearch && failMessageSearch.parentNode){
     failMessageSearch.parentNode.removeChild(failMessageSearch);
+  }
+  const failMessageByLetterElement = document.getElementById("failMessageByLetter");
+  if(failMessageByLetterElement && failMessageByLetterElement.parentNode){
+    failMessageByLetterElement.parentNode.removeChild(failMessageByLetterElement);
   }
 }
 function postData(data){
@@ -230,6 +251,7 @@ fetch("https://www.themealdb.com/api/json/v1/1/search.php?s="+mealName)
   
   }else{
     failMessageSearch.innerText = "No meal found with given name."
+    failMessageSearch.id = "failMessageSearch";
     document.body.appendChild(failMessageSearch);
     searchField.value = "";
   }
@@ -239,8 +261,17 @@ fetch("https://www.themealdb.com/api/json/v1/1/search.php?s="+mealName)
 }
 
  function printAllMealNames(){
+  let favoritesHeader = document.getElementById("favoritesHeader");
+  if (favoritesHeader) {
+    favoritesHeader.parentNode.removeChild(favoritesHeader);
+  }
+  favoritesHeader = document.createElement("h2");
+  favoritesHeader.id = "favoritesHeader";
+  favoritesHeader.innerText = "Your Favorites:";
+
   removeOlContainer();
   removeFailMessageSearch();
+
   fetch("http://localhost:8080/mealNames")
   .then((res)=> res.json())
   .then((data)=>{
@@ -254,18 +285,22 @@ fetch("https://www.themealdb.com/api/json/v1/1/search.php?s="+mealName)
       setTimeout(() => {
         ol.removeChild(message);
       }, 3000);
+     
     }else{
     data.forEach((mealName)=>{
       const li = document.createElement("li");
       li.innerText = mealName;
+      li.id = "printAllMeals";
       const deleteButton = document.createElement("button");
       deleteButton.innerText = "Delete";
+      deleteButton.id = "buttonDisplayed1";
       deleteButton.addEventListener("click", ()=>{
         deleteMeal(mealName, li);
       });
       li.appendChild(deleteButton);
       const getButton = document.createElement("button");
-      getButton.innerText = "Work with saved dish";
+      getButton.innerText = "Get Saved Recipe";
+      getButton.id = "buttonDisplayed1";
       getButton.addEventListener("click", ()=>{
         document.body.removeChild(ol);
         const liElements = ol.getElementsByTagName("li");
@@ -274,13 +309,18 @@ fetch("https://www.themealdb.com/api/json/v1/1/search.php?s="+mealName)
         }
         
         getTableData(mealName);
+        if(favoritesHeader){
+          favoritesHeader.style.display = "none";
+        }
         
       });
       li.appendChild(getButton);
       ol.appendChild(li);
     });
+   
   }
     ol.style.textAlign = "center";
+    document.body.appendChild(favoritesHeader);
     document.body.appendChild(ol);
   })
   .catch((error)=> console.log("Error fetching meal names", error));
@@ -295,6 +335,7 @@ fetch("https://www.themealdb.com/api/json/v1/1/search.php?s="+mealName)
   })
   .catch((error)=>console.log('error fetching table data',error));
  }
+ 
  const ol2 = document.createElement("ol");
  ol2.id = "letterSearch";
  document.body.appendChild(ol2);
@@ -309,34 +350,40 @@ fetch("https://www.themealdb.com/api/json/v1/1/search.php?s="+mealName)
   const li = document.createElement("li");
   const mealIDParagraph = document.createElement("p");
   mealIDParagraph.innerText = "Meal ID: "+mealId;
- 
+  
+  const textarea1Container = document.createElement("div");
   const textarea1 = document.createElement("textarea");
+  textarea1.id = "textarea";
   textarea1.value = mealName;
   textarea1.placeholder ="Meal Name";
   textarea1.rows = 2;
   textarea1.cols = 30;
+  textarea1Container.appendChild(textarea1);
+  li.appendChild(textarea1Container);
 
+  const textarea2Container = document.createElement("div");
   const textarea2 = document.createElement("textarea");
+  textarea2.id = "textarea";
   textarea2.value = recipe;
   textarea2.placeholder ="Recipe";
   textarea2.rows = 20;
   textarea2.cols = 60;
+  textarea2Container.appendChild(textarea2);
+  li.appendChild(textarea2Container);
 
+  const textarea3Container = document.createElement("div");
   const textarea3 = document.createElement("textarea");
+  textarea3.id = "textarea";
   textarea3.value = comment;
   textarea3.placeholder ="Comment";
   textarea3.rows = 5;
   textarea3.cols = 30;
-
-  li.appendChild(mealIDParagraph);
-  li.appendChild(textarea1);
-  li.appendChild(textarea2);
-  li.appendChild(textarea3);
-
-  
+  textarea3Container.appendChild(textarea3);
+  li.appendChild(textarea3Container);
 
   const postUpdateBtn = document.createElement("button");
   postUpdateBtn.innerText = "Save Update";
+  postUpdateBtn.id = "buttonDisplayed";
   postUpdateBtn.addEventListener("click", ()=>{
     const updatedData ={
       id: mealId,
@@ -349,6 +396,7 @@ fetch("https://www.themealdb.com/api/json/v1/1/search.php?s="+mealName)
   });
   const exitBtn2 = document.createElement("button");
   exitBtn2.innerText = "Exit";
+  exitBtn2.id = "buttonDisplayed";
   exitBtn2.addEventListener("click", ()=>{
     window.history.back();
     ol2.removeChild(li);
@@ -359,9 +407,6 @@ fetch("https://www.themealdb.com/api/json/v1/1/search.php?s="+mealName)
   
  }
  
- 
- 
-
  function updateRecipe(mealName, mealData, listItem){
   const url = `http://localhost:8080/mealNames/${mealName}`;
   
@@ -388,10 +433,10 @@ fetch("https://www.themealdb.com/api/json/v1/1/search.php?s="+mealName)
       console.log("Uppdated successfully");
   } else{
 
-    const mealIDParagraph = listItem.querySelector("textarea:nth-of-type(1)");
-    mealIDParagraph.innerText = "Meal Id: "+updatedRecipe.idMeal;
+    const mealIDParagraph = listItem.querySelector("p");
+    mealIDParagraph.innerText = "Meal Id: " + updatedRecipe.idMeal;
 
-    const textarea1 = listItem.querySelector("textarea:nth-of-type(2");
+    const textarea1 = listItem.querySelector("textarea:nth-of-type(1)");
     textarea1.value = updatedRecipe.mealName;
 
     const textarea2 = listItem.querySelector("textarea:nth-of-type(2)");
@@ -399,12 +444,11 @@ fetch("https://www.themealdb.com/api/json/v1/1/search.php?s="+mealName)
     
     const textarea3 = listItem.querySelector("textarea:nth-of-type(3)");
     textarea3.value = updatedRecipe.comment;
-
-
   } 
  })
  .catch((error)=> console.log("Error updating recipe: ", error)); 
 }
+
  function deleteMeal(mealName, listItem){
   const url = `http://localhost:8080/mealNames/${mealName}`;
   const options = {
