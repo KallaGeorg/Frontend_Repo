@@ -239,7 +239,7 @@ removeFailMessageSearch();
 fetch("https://www.themealdb.com/api/json/v1/1/search.php?s="+mealName)
 .then(res => res.json())
 .then(data => {
-  console.log("data", data);
+  
   const meal = data.meals ? data.meals[0]: null;
   if(meal){
     failMessageSearch.remove();
@@ -248,7 +248,7 @@ fetch("https://www.themealdb.com/api/json/v1/1/search.php?s="+mealName)
     ol.appendChild(li);
     document.body.appendChild(ol); 
     
-  console.log("Recipe: ", mealRecipe);
+  
   
   }else{
     failMessageSearch.innerText = "No meal found with given name."
